@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프레임팁 섭외 현황</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script>
+  // 저장된 테마를 먼저 적용해 깜빡임을 막음
+  try { var t = localStorage.getItem('ft_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<style>
+:root {
+  --bg: #f5f4f0; --card: #ffffff; --ink: #18181c; --mute: #6c6c76; --faint: #a3a3ab;
+  --line: #e5e3dd; --soft: #eeece6; --accent: #2b37c4;
+  --study: #2b37c4; --draw: #d9692a; --calli: #4b8a2c;
+  --ok: #1d8a58; --warn: #b87300; --danger: #c23b3b;
+  --s0: #d9d7d0; --s1: #c3c8f2; --s2: #9aa3ec; --s3: #6f7be0; --s4: #4b57d2; --s5: #2b37c4; --s6: #1d8a58;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111215; --card: #1a1b20; --ink: #ececf0; --mute: #9b9ba8; --faint: #6a6a75;
+    --line: #2a2b32; --soft: #23242a; --accent: #8c95ff;
+    --study: #8c95ff; --draw: #f0975a; --calli: #8bc46a;
+    --ok: #4cc38a; --warn: #e3a838; --danger: #ef6b6b;
+    --s0: #34353d; --s1: #3b4180; --s2: #4a52a8; --s3: #5c66cc; --s4: #747ee6; --s5: #8c95ff; --s6: #4cc38a;
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111215; --card: #1a1b20; --ink: #ececf0; --mute: #9b9ba8; --faint: #6a6a75;
+  --line: #2a2b32; --soft: #23242a; --accent: #8c95ff;
+  --study: #8c95ff; --draw: #f0975a; --calli: #8bc46a;
+  --ok: #4cc38a; --warn: #e3a838; --danger: #ef6b6b;
+  --s0: #34353d; --s1: #3b4180; --s2: #4a52a8; --s3: #5c66cc; --s4: #747ee6; --s5: #8c95ff; --s6: #4cc38a;
+  --shadow: none; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.55 "Noto Sans KR", "Pretendard", -apple-system, "Apple SD Gothic Neo", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .02em; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* header */
+header {
+  position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+}
+.bar-in { max-width: 1240px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+.brand { min-width: 0; flex: 1; }
+.brand .mono { color: var(--mute); }
+.brand h1 { margin: 2px 0 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px;
+  border: 1px solid var(--line); background: var(--card); border-radius: 9px; font-size: 13px; font-weight: 500;
+  transition: border-color .15s, background .15s;
+}
+.btn:hover { border-color: var(--faint); }
+.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.btn.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; background: var(--card); padding: 3px; height: 36px; }
+.seg button { border: 0; background: transparent; border-radius: 6px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--mute); }
+.seg button svg { width: 15px; height: 15px; }
+.seg button[aria-pressed="true"] { background: var(--soft); color: var(--ink); font-weight: 500; }
+
+main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+html, body { overflow-x: hidden; }
+.notice {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  border: 1px dashed var(--faint); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--mute);
+}
+.notice b { color: var(--ink); font-weight: 500; }
+.notice button { border: 0; background: none; color: var(--accent); padding: 0; font-weight: 500; }
+.notice.err { border-color: var(--danger); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { margin: 0 0 14px; font-size: 14px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
+.card h2 .mono { color: var(--faint); font-weight: 500; }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.kpi { padding: 16px 18px; }
+.kpi .lab { font-size: 12.5px; color: var(--mute); }
+.kpi .val { font-size: 30px; font-weight: 700; line-height: 1.15; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.kpi .val small { font-size: 14px; font-weight: 500; color: var(--mute); margin-left: 4px; letter-spacing: 0; }
+.kpi .sub { font-size: 12px; color: var(--mute); margin-top: 6px; }
+.ring { display: flex; align-items: center; gap: 14px; }
+.ring svg { width: 54px; height: 54px; flex-shrink: 0; transform: rotate(-90deg); }
+
+.row2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; }
+
+/* funnel */
+.funnel { display: grid; gap: 9px; }
+.f-row { display: grid; grid-template-columns: 84px 1fr 56px; align-items: center; gap: 12px; font-size: 13px; }
+.f-row .nm { color: var(--mute); }
+.f-track { height: 26px; background: var(--soft); border-radius: 7px; overflow: hidden; }
+.f-fill { height: 100%; border-radius: 7px; transition: width .5s ease; }
+.f-row .ct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.f-row .ct span { color: var(--faint); font-weight: 400; font-size: 12px; }
+.f-row.zero .nm, .f-row.zero .ct { color: var(--faint); }
+
+/* category */
+.cat { display: grid; gap: 16px; }
+.cat-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-bottom: 6px; }
+.cat-h b { font-weight: 700; }
+.cat-h span { color: var(--mute); font-variant-numeric: tabular-nums; }
+.stack { display: flex; height: 14px; border-radius: 5px; overflow: hidden; background: var(--soft); gap: 2px; }
+.stack i { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--mute); margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* todo */
+.todo { display: grid; gap: 8px; }
+.task { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: 13px; }
+.task .tag { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; color: #fff; white-space: nowrap; }
+.task .who { font-weight: 500; }
+.task .who small { color: var(--mute); font-weight: 400; margin-left: 6px; }
+.task .when { color: var(--mute); font-size: 12px; white-space: nowrap; }
+.empty { color: var(--mute); font-size: 13px; padding: 8px 0; }
+
+/* table */
+.tbl-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.tbl-head h2 { margin: 0; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 11px; font-size: 12.5px; color: var(--mute); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.scroll { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 860px; }
+th { text-align: left; font-weight: 500; color: var(--mute); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.nm b { font-weight: 700; display: block; }
+td.nm .mono { color: var(--faint); }
+.ctag { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.subs { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.subs .mini { height: 4px; background: var(--soft); border-radius: 2px; margin-top: 5px; width: 90px; overflow: hidden; }
+.subs .mini i { display: block; height: 100%; background: var(--faint); }
+.steps { display: flex; align-items: center; gap: 4px; }
+.steps i { width: 14px; height: 6px; border-radius: 3px; background: var(--soft); display: block; }
+.steps i.on { background: var(--accent); }
+.steps i.done { background: var(--ok); }
+.steplab { font-size: 12px; margin-top: 5px; font-weight: 500; white-space: nowrap; }
+.steplab.hold { color: var(--faint); }
+.dday { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+.dday.w { color: var(--warn); } .dday.d { color: var(--danger); } .dday.n { color: var(--faint); font-weight: 400; }
+td.act { color: var(--mute); max-width: 260px; }
+
+footer { max-width: 1240px; margin: 0 auto; padding: 0 24px 32px; color: var(--faint); font-size: 12px; }
+
+dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); padding: 20px; width: min(520px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog h3 { margin: 0 0 6px; font-size: 16px; }
+dialog p { margin: 0 0 12px; color: var(--mute); font-size: 13px; }
+dialog input { width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); padding: 0 12px; font: inherit; font-size: 13px; }
+dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+@media (max-width: 1000px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .bar-in { padding: 12px 16px; flex-wrap: wrap; }
+  .brand { flex-basis: 100%; }
+  .tools { width: 100%; }
+  .tools .btn .t, .seg .t { display: none; }
+  .tools .seg { margin-left: auto; }
+  main { padding: 16px 16px 40px; }
+  footer { padding: 0 16px 28px; }
+  .kpis { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+  .kpi.wide { grid-column: span 2; }
+  .kpi .val { font-size: 26px; }
+  .card { padding: 16px; }
+  .scroll { margin: 0 -16px; padding: 0 16px; }
+  .f-row { grid-template-columns: 70px 1fr 48px; gap: 8px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar-in">
+    <div class="brand">
+      <div class="mono">FRAMEBY · FRAME TIP</div>
+      <h1>대표 사용자 섭외 현황</h1>
+    </div>
+    <div class="tools">
+      <button class="btn" id="refresh" title="스프레드시트에서 다시 불러오기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        <span class="t">새로고침</span>
+      </button>
+      <button class="btn" id="sheet" title="연결된 스프레드시트 열기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+        <span class="t">스프레드시트</span>
+      </button>
+      <div class="seg" role="group" aria-label="화면 테마">
+        <button data-theme-btn="light" aria-pressed="false" title="라이트">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="t">라이트</span>
+        </button>
+        <button data-theme-btn="dark" aria-pressed="false" title="다크">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="t">다크</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="notice" id="notice"></div>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="row2">
+    <div class="card">
+      <h2>진행 단계 <span class="mono">단계별 도달 인원</span></h2>
+      <div class="funnel" id="funnel"></div>
+    </div>
+    <div class="card">
+      <h2>영역별 현황 <span class="mono">현재 단계 분포</span></h2>
+      <div class="cat" id="cats"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>지금 할 일 <span class="mono" id="todoCount"></span></h2>
+    <div class="todo" id="todo"></div>
+  </section>
+
+  <section class="card">
+    <div class="tbl-head">
+      <h2>채널별 진행 <span class="mono" id="tblCount"></span></h2>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>채널</th><th>영역</th><th>구독자</th><th>경로</th><th>진행</th><th>컨택 후</th><th>다음 액션 · 메모</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<footer id="foot"></footer>
+
+<dialog id="dlg">
+  <form method="dialog">
+    <h3>스프레드시트 연결</h3>
+    <p>‘링크가 있는 모든 사용자’에게 보기 권한이 열린 구글 시트 주소를 붙여 넣으세요. 특정 탭을 쓰려면 그 탭을 연 상태의 주소(#gid=…)를 복사하면 됩니다.</p>
+    <input id="dlgInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/…/edit#gid=0" autocomplete="off">
+    <div class="acts">
+      <button class="btn" value="cancel">취소</button>
+      <button class="btn pri" value="ok" id="dlgOk">연결</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ============================================================
+   설정: 시트 주소를 여기에 넣어 두면 누구 브라우저에서 열어도 바로 연결됩니다.
+   비워 두면 화면의 [스프레드시트] 버튼으로 입력할 수 있습니다(이 브라우저에만 저장).
+   ============================================================ */
+const SHEET_URL = "";
+
+const TODAY = new Date();
+
+const STAGES = [
+  { label: "회신 대기",   short: "컨택" },
+  { label: "회신",       short: "회신" },
+  { label: "발송정보 확인", short: "발송정보" },
+  { label: "키트 발송",   short: "키트 발송" },
+  { label: "체험 중",     short: "체험" },
+  { label: "인터뷰",      short: "인터뷰" },
+  { label: "완료",       short: "완료" },
+];
+const HOLD = -1;
+const CATS = [
+  { key: "공부", color: "var(--study)" },
+  { key: "드로잉", color: "var(--draw)" },
+  { key: "캘리그래피", color: "var(--calli)" },
+  { key: "굿노트 필기", color: "var(--warn)" },
+];
+
+// 시트에 연결되기 전에 보여줄 데이터 (11월 16일 기준)
+const FALLBACK = [
+  ["채널","핸들","영역","구독자","경로","단계","컨택일","회신일","키트발송일","다음 액션"],
+  ["디아 Dia","@sweetdia_med","공부","79.2만","메일","회신 대기","","","","인터뷰 전 근무처 겸직 규정 확인"],
+  ["효빈 HYOBIN","@hyobin","공부","31.6만","메일","회신 대기","","","","무응답이면 인스타 DM으로 근황 인사 겸 연락"],
+  ["선선 sunsun","@sunsun_","공부","12.9만","인스타 DM","회신 대기","","","","DM 요청함 가능성. D+7에 짧게 한 번만"],
+  ["우아 ooa","@우아ooa","공부","10.3만","메일","회신 대기","","","","리마인드 1회 후 종료, 3개월 뒤 재연락"],
+  ["벨다 verrda","@verrbes","공부","3.66만","메일","회신 대기","","","","회신 시 한국 배송인지 확인"],
+  ["임윤서","@yoonseollim","공부","7.5천","메일","발송정보 확인","","","","키트와 편지 발송. 드로잉 수업 경험도 질문"],
+  ["혜윰 HYEYOOM","@iamhyeyoom","공부","1380","메일","발송정보 확인","","","","키트와 편지 발송. 사용자 패널 1순위"],
+  ["고미콩 gomikong","@gomikong","드로잉","15만","메일","회신 대기","","","","인터뷰 단계에서 스티커 세트·입점 협업 제안"],
+  ["이공 LEEGONG","@LEEGONG","드로잉","6.61만","메일","회신 대기","","","","무응답이면 인스타 DM. 필름 사용 여부 확인"],
+  ["금손햄찌","@gold_hamzzi","드로잉","5.71만","메일","발송정보 확인","","","","키트와 편지 발송. 수강생 단체 구성 질문"],
+  ["리노TV Lino TV","@Linoart","캘리그래피","1.49만","인스타 DM","발송정보 확인","","","","키트와 편지 발송. 리뷰 영상 원하면 별도 협의"],
+  ["캘리바이 (이용선)","@callibyme","캘리그래피","1.3천","메일","발송정보 확인","","","","키트와 편지 발송. 브러시 협업 여지"],
+];
+
+/* ---------- 유틸 ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} },
+};
+
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cur); rows.push(row); row = []; cur = "";
+    } else cur += c;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter((r) => r.some((v) => v.trim() !== ""));
+}
+
+function parseSubs(v) {
+  if (v == null) return 0;
+  const s = String(v).replace(/[,\s명]/g, "");
+  const m = s.match(/([\d.]+)(만|천|k|K|m|M)?/);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  return Math.round(n * ({ "만": 1e4, "천": 1e3, k: 1e3, K: 1e3, m: 1e6, M: 1e6 }[m[2]] || 1));
+}
+function fmtSubs(n) {
+  if (!n) return "–";
+  if (n >= 1e4) return (n / 1e4).toFixed(n >= 1e5 ? 1 : 2).replace(/\.?0+$/, "") + "만";
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "천";
+  return n.toLocaleString("ko-KR");
+}
+function parseDate(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})\D+(\d{1,2})/);            // 11/12, 11월 12일
+  if (m) return new Date(TODAY.getFullYear(), +m[1] - 1, +m[2]);
+  m = s.match(/^Date\((\d+),(\d+),(\d+)/);           // gviz 날짜 형식
+  if (m) return new Date(+m[1], +m[2], +m[3]);
+  return null;
+}
+const daysSince = (d) => d ? Math.floor((TODAY - d) / 864e5) : null;
+
+function stageOf(t) {
+  const s = String(t || "").replace(/\s/g, "");
+  if (!s) return 0;
+  if (/보류|종료|거절|무응답종료|드롭/.test(s)) return HOLD;
+  if (/인터뷰완료|완료$|^완료/.test(s)) return 6;
+  if (/인터뷰/.test(s)) return 5;
+  if (/체험|도착|사용중|설문/.test(s)) return 4;
+  if (/키트|배송|택배/.test(s)) return 3;
+  if (/발송정보|주소|정보확인/.test(s)) return 2;
+  if (/회신/.test(s) && !/대기/.test(s)) return 1;
+  return 0;
+}
+
+// 머리글 이름이 조금 달라도 찾도록 후보를 둠. 성함·연락처·주소 열은 읽지 않음.
+const COLS = {
+  name:  ["채널", "채널명", "유튜버", "크리에이터", "인플루언서"],
+  handle:["핸들", "아이디", "계정"],
+  cat:   ["영역", "카테고리", "분야"],
+  subs:  ["구독자", "팔로워"],
+  route: ["경로", "연락경로", "연락 경로", "컨택경로"],
+  stage: ["단계", "상태", "진행", "진행상황", "진행 상황"],
+  sent:  ["컨택일", "연락일", "제안일", "메일발송일"],
+  reply: ["회신일", "답장일"],
+  kit:   ["키트발송일", "키트 발송일", "배송일", "제품발송일"],
+  note:  ["다음 액션", "다음액션", "메모", "비고", "팔로업"],
+};
+function toPeople(table) {
+  const head = table[0].map((h) => h.trim());
+  const idx = {};
+  for (const [k, cands] of Object.entries(COLS)) {
+    idx[k] = head.findIndex((h) => cands.some((c) => h.replace(/\s/g, "") === c.replace(/\s/g, "")));
+    if (idx[k] < 0) idx[k] = head.findIndex((h) => cands.some((c) => h.includes(c)));
+  }
+  if (idx.name < 0) throw new Error("‘채널’ 열을 찾지 못했습니다. 첫 행 머리글에 ‘채널’을 넣어 주세요.");
+  const g = (r, k) => (idx[k] >= 0 ? (r[idx[k]] || "").trim() : "");
+  return table.slice(1).filter((r) => g(r, "name")).map((r) => {
+    const cat = g(r, "cat") || "기타";
+    return {
+      name: g(r, "name"), handle: g(r, "handle"),
+      cat: /캘리/.test(cat) ? "캘리그래피" : /드로잉|그림|일러/.test(cat) ? "드로잉" : /굿노트|필기/.test(cat) ? "굿노트 필기" : /공부|스터디/.test(cat) ? "공부" : cat,
+      subs: parseSubs(g(r, "subs")), route: g(r, "route") || "–",
+      stageText: g(r, "stage"), stage: stageOf(g(r, "stage")),
+      sent: parseDate(g(r, "sent")), reply: parseDate(g(r, "reply")), kit: parseDate(g(r, "kit")),
+      note: g(r, "note"),
+    };
+  });
+}
+
+/* ---------- 데이터 불러오기 ---------- */
+function sheetLink() { return SHEET_URL || store.get("ft_sheet") || ""; }
+function csvUrl(link) {
+  const id = (link.match(/\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
+  if (!id) return null;
+  const gid = (link.match(/[#&?]gid=(\d+)/) || [])[1];
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv${gid ? "&gid=" + gid : ""}&_=${Date.now()}`;
+}
+
+let PEOPLE = [], SOURCE = "", LOADED_AT = null, FILTER = "전체";
+
+async function load() {
+  const btn = $("#refresh"); btn.classList.add("spin"); btn.disabled = true;
+  const link = sheetLink();
+  let err = null;
+  try {
+    if (!link) throw null;
+    const url = csvUrl(link);
+    if (!url) throw new Error("구글 시트 주소 형식이 아닙니다.");
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`시트를 읽지 못했습니다 (HTTP ${res.status}). 공유 설정이 ‘링크가 있는 모든 사용자’인지 확인해 주세요.`);
+    const text = await res.text();
+    if (/^\s*</.test(text)) throw new Error("시트 대신 로그인 페이지가 돌아왔습니다. 공유 설정을 확인해 주세요.");
+    PEOPLE = toPeople(parseCSV(text));
+    SOURCE = "sheet";
+  } catch (e) {
+    err = e;
+    PEOPLE = toPeople(FALLBACK);
+    SOURCE = "fallback";
+  }
+  LOADED_AT = new Date();
+  render(err);
+  setTimeout(() => { btn.classList.remove("spin"); btn.disabled = false; }, 300);
+}
+
+/* ---------- 그리기 ---------- */
+const catColor = (c) => (CATS.find((x) => x.key === c) || { color: "var(--faint)" }).color;
+const stageColor = (i) => (i === HOLD ? "var(--faint)" : `var(--s${i})`);
+
+function render(err) {
+  const N = PEOPLE.length;
+  const active = PEOPLE.filter((p) => p.stage !== HOLD);
+  const reached = (i) => active.filter((p) => p.stage >= i).length;
+  const replied = reached(1), kit = reached(3), inter = reached(5), hold = N - active.length;
+  const subsTotal = PEOPLE.reduce((a, p) => a + p.subs, 0);
+  const rate = N ? Math.round((replied / N) * 100) : 0;
+  const cats = [...new Set(PEOPLE.map((p) => p.cat))].sort((a, b) => {
+    const ia = CATS.findIndex((c) => c.key === a), ib = CATS.findIndex((c) => c.key === b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+
+  // 알림
+  const n = $("#notice");
+  if (SOURCE === "sheet") {
+    n.className = "notice"; n.hidden = true;
+  } else {
+    n.hidden = false;
+    n.className = "notice" + (err && err.message ? " err" : "");
+    n.innerHTML = err && err.message
+      ? `<b>시트 연결 오류</b><span>${esc(err.message)} 지금은 11월 16일 기준 내장 데이터를 보여주고 있습니다.</span><button id="nfix">주소 다시 입력</button>`
+      : `<b>스프레드시트 연결 전</b><span>11월 16일 기준 내장 데이터를 보여주고 있습니다.</span><button id="nfix">시트 연결하기</button>`;
+    $("#nfix").onclick = openDialog;
+  }
+
+  // KPI
+  const C = 2 * Math.PI * 22;
+  $("#kpis").innerHTML = `
+    <div class="card kpi"><div class="lab">컨택</div><div class="val">${N}<small>명</small></div><div class="sub">${cats.length}개 영역 · 메일 ${PEOPLE.filter((p) => /메일/.test(p.route)).length} / DM ${PEOPLE.filter((p) => /DM|인스타/.test(p.route)).length}</div></div>
+    <div class="card kpi"><div class="lab">회신</div>
+      <div class="ring"><div class="val">${replied}<small>명</small></div>
+      <svg viewBox="0 0 54 54" aria-label="회신률 ${rate}%"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--soft)" stroke-width="7"/><circle cx="27" cy="27" r="22" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * rate) / 100} ${C}"/></svg></div>
+      <div class="sub">회신률 ${rate}%${hold ? ` · 보류 ${hold}명` : ""}</div></div>
+    <div class="card kpi"><div class="lab">키트 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${reached(2) - kit > 0 ? `발송 대기 ${reached(2) - kit}명` : "회신자 전원 발송"}</div></div>
+    <div class="card kpi"><div class="lab">인터뷰</div><div class="val">${inter}<small>명</small></div><div class="sub">목표 영역마다 1명 · 전체 3명</div></div>
+    <div class="card kpi wide"><div class="lab">합산 구독자</div><div class="val">${fmtSubs(subsTotal)}</div><div class="sub">회신자 합산 ${fmtSubs(active.filter((p) => p.stage >= 1).reduce((a, p) => a + p.subs, 0))}</div></div>`;
+
+  // 퍼널
+  $("#funnel").innerHTML = STAGES.map((s, i) => {
+    const c = i === 0 ? N : reached(i);
+    const w = N ? (c / N) * 100 : 0;
+    return `<div class="f-row${c ? "" : " zero"}"><div class="nm">${s.short}</div>
+      <div class="f-track"><div class="f-fill" style="width:${w}%;background:${i === 0 ? "var(--faint)" : stageColor(i)}"></div></div>
+      <div class="ct">${c}<span> 명</span></div></div>`;
+  }).join("") + (hold ? `<div class="f-row"><div class="nm">보류</div><div class="f-track"><div class="f-fill" style="width:${(hold / N) * 100}%;background:var(--s0)"></div></div><div class="ct">${hold}<span> 명</span></div></div>` : "");
+
+  // 영역별
+  $("#cats").innerHTML = cats.map((c) => {
+    const ps = PEOPLE.filter((p) => p.cat === c);
+    const rep = ps.filter((p) => p.stage >= 1).length;
+    const segs = [...STAGES.keys(), HOLD].map((i) => {
+      const k = ps.filter((p) => p.stage === i).length;
+      return k ? `<i style="flex:${k};background:${i === HOLD ? "var(--s0)" : stageColor(i)}" title="${i === HOLD ? "보류" : STAGES[i].label} ${k}명"></i>` : "";
+    }).join("");
+    return `<div><div class="cat-h"><b style="color:${catColor(c)}">${esc(c)}</b><span>회신 ${rep} / ${ps.length}명 · ${fmtSubs(ps.reduce((a, p) => a + p.subs, 0))}</span></div><div class="stack">${segs}</div></div>`;
+  }).join("") + (cats.includes("굿노트 필기") ? "" : `<div><div class="cat-h"><b style="color:var(--faint)">굿노트 필기</b><span>아직 컨택 전</span></div><div class="stack"></div></div>`);
+  $("#legend").innerHTML = STAGES.map((s, i) => `<span><i style="background:${stageColor(i)}"></i>${s.label}</span>`).join("");
+
+  // 할 일
+  const tasks = [];
+  for (const p of PEOPLE) {
+    const d = daysSince(p.sent);
+    if (p.stage === 2) tasks.push({ p, pri: 0, tag: "키트 발송", col: "var(--accent)", when: "주소 받음" });
+    else if (p.stage === 1) tasks.push({ p, pri: 1, tag: "정보 요청", col: "var(--accent)", when: "48시간 안에" });
+    else if (p.stage === 3) {
+      const k = daysSince(p.kit);
+      if (k == null || k >= 3) tasks.push({ p, pri: 2, tag: "도착 확인", col: "var(--ok)", when: k == null ? "발송일 미입력" : `발송 ${k}일째` });
+    } else if (p.stage === 4) tasks.push({ p, pri: 3, tag: "설문·인터뷰", col: "var(--ok)", when: "일정 잡기" });
+    else if (p.stage === 0 && d != null && d >= 14) tasks.push({ p, pri: 1, tag: "종료 검토", col: "var(--danger)", when: `D+${d}` });
+    else if (p.stage === 0 && d != null && d >= 7) tasks.push({ p, pri: 1, tag: "리마인드", col: "var(--warn)", when: `D+${d}` });
+  }
+  tasks.sort((a, b) => a.pri - b.pri || b.p.subs - a.p.subs);
+  const noDate = PEOPLE.filter((p) => p.stage === 0 && !p.sent).length;
+  $("#todoCount").textContent = tasks.length ? `${tasks.length}건` : "";
+  $("#todo").innerHTML = (tasks.length ? tasks.map((t) => `
+    <div class="task"><span class="tag" style="background:${t.col}">${t.tag}</span>
+      <div class="who">${esc(t.p.name)}<small>${esc(t.p.cat)}${t.p.note ? " · " + esc(t.p.note) : ""}</small></div>
+      <span class="when">${esc(t.when)}</span></div>`).join("") : `<div class="empty">지금 처리할 일이 없습니다.</div>`)
+    + (noDate ? `<div class="empty">회신 대기 ${noDate}명은 컨택일이 비어 있어 리마인드(D+7)·종료(D+14) 시점을 계산하지 못했습니다. 시트의 ‘컨택일’ 열을 채워 주세요.</div>` : "");
+
+  // 칩
+  const opts = ["전체", ...cats, "회신자"];
+  if (!opts.includes(FILTER)) FILTER = "전체";
+  $("#chips").innerHTML = opts.map((o) => `<button class="chip" aria-pressed="${o === FILTER}" data-f="${esc(o)}">${esc(o)}</button>`).join("");
+  $("#chips").querySelectorAll(".chip").forEach((b) => (b.onclick = () => { FILTER = b.dataset.f; render(err); }));
+
+  // 표
+  const maxSubs = Math.max(1, ...PEOPLE.map((p) => p.subs));
+  const list = PEOPLE.filter((p) => FILTER === "전체" || (FILTER === "회신자" ? p.stage >= 1 : p.cat === FILTER))
+    .slice().sort((a, b) => b.stage - a.stage || b.subs - a.subs);
+  $("#tblCount").textContent = `${list.length}명`;
+  $("#rows").innerHTML = list.map((p) => {
+    const d = daysSince(p.sent);
+    const dcls = d == null ? "n" : p.stage === 0 && d >= 14 ? "d" : p.stage === 0 && d >= 7 ? "w" : "";
+    const steps = STAGES.map((_, i) => `<i class="${p.stage === HOLD ? "" : i <= p.stage ? (p.stage === 6 ? "done" : "on") : ""}"></i>`).join("");
+    const cc = catColor(p.cat);
+    return `<tr>
+      <td class="nm"><b>${esc(p.name)}</b><span class="mono">${esc(p.handle)}</span></td>
+      <td><span class="ctag" style="color:${cc};background:color-mix(in srgb, ${cc} 14%, transparent)">${esc(p.cat)}</span></td>
+      <td class="subs">${fmtSubs(p.subs)}<div class="mini"><i style="width:${Math.max(2, (p.subs / maxSubs) * 100)}%"></i></div></td>
+      <td>${esc(p.route)}</td>
+      <td><div class="steps">${steps}</div><div class="steplab${p.stage === HOLD ? " hold" : ""}">${p.stage === HOLD ? esc(p.stageText || "보류") : STAGES[p.stage].label}</div></td>
+      <td class="dday ${dcls}">${d == null ? "날짜 없음" : "D+" + d}</td>
+      <td class="act">${esc(p.note) || "–"}</td></tr>`;
+  }).join("");
+
+  const t = LOADED_AT;
+  $("#foot").innerHTML = `${SOURCE === "sheet" ? "스프레드시트" : "내장 데이터"} 기준 · ${t.getMonth() + 1}월 ${t.getDate()}일 ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} 불러옴 · 성함·연락처·주소 열은 화면에 불러오지 않습니다.`;
+}
+
+/* ---------- 버튼 ---------- */
+function openDialog() {
+  $("#dlgInput").value = sheetLink();
+  $("#dlg").showModal();
+}
+$("#dlg").addEventListener("close", () => {
+  if ($("#dlg").returnValue !== "ok") return;
+  const v = $("#dlgInput").value.trim();
+  store.set("ft_sheet", v || null);
+  load();
+});
+$("#refresh").onclick = load;
+$("#sheet").onclick = () => {
+  const link = sheetLink();
+  if (link) window.open(link, "_blank", "noopener");
+  else openDialog();
+};
+$("#sheet").oncontextmenu = (e) => { e.preventDefault(); openDialog(); };
+
+function currentTheme() {
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t) return t;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function syncTheme() {
+  const t = currentTheme();
+  document.querySelectorAll("[data-theme-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeBtn === t)));
+}
+document.querySelectorAll("[data-theme-btn]").forEach((b) => (b.onclick = () => {
+  document.documentElement.setAttribute("data-theme", b.dataset.themeBtn);
+  store.set("ft_theme", b.dataset.themeBtn);
+  syncTheme();
+}));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
+syncTheme();
+
+load();
+</script>
+</body>
+</html>

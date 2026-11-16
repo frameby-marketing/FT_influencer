@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>프레임팁 섭외 현황</title>
+<title>프레임팁 인터뷰 섭외현황</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -82,6 +82,7 @@ html, body { overflow-x: hidden; }
 .notice b { color: var(--ink); font-weight: 500; }
 .notice button { border: 0; background: none; color: var(--accent); padding: 0; font-weight: 500; }
 .notice.err { border-color: var(--danger); }
+.notice[hidden] { display: none; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow); min-width: 0; }
 .card h2 { margin: 0 0 14px; font-size: 14px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
@@ -192,7 +193,7 @@ dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--
   <div class="bar-in">
     <div class="brand">
       <div class="mono">FRAMEBY · FRAME TIP</div>
-      <h1>대표 사용자 섭외 현황</h1>
+      <h1>프레임팁 인터뷰 섭외현황</h1>
     </div>
     <div class="tools">
       <button class="btn" id="refresh" title="스프레드시트에서 다시 불러오기">
@@ -269,7 +270,7 @@ dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--
    설정: 시트 주소를 여기에 넣어 두면 누구 브라우저에서 열어도 바로 연결됩니다.
    비워 두면 화면의 [스프레드시트] 버튼으로 입력할 수 있습니다(이 브라우저에만 저장).
    ============================================================ */
-const SHEET_URL = "";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1IyF0vx9rSybW2aSqiwVMIopKBpOUx_XPAQDbjCp9tW0/edit?gid=0#gid=0";
 
 const TODAY = new Date();
 
@@ -364,7 +365,7 @@ function stageOf(t) {
   const s = String(t || "").replace(/\s/g, "");
   if (!s) return 0;
   if (/보류|종료|거절|무응답종료|드롭/.test(s)) return HOLD;
-  if (/인터뷰완료|완료$|^완료/.test(s)) return 6;
+  if (/인터뷰완료|체험완료|최종완료|^완료$/.test(s)) return 6;
   if (/인터뷰/.test(s)) return 5;
   if (/체험|도착|사용중|설문/.test(s)) return 4;
   if (/키트|배송|택배/.test(s)) return 3;
@@ -410,11 +411,33 @@ function toPeople(table) {
 
 /* ---------- 데이터 불러오기 ---------- */
 function sheetLink() { return SHEET_URL || store.get("ft_sheet") || ""; }
-function csvUrl(link) {
+function gvizBase(link) {
   const id = (link.match(/\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
   if (!id) return null;
   const gid = (link.match(/[#&?]gid=(\d+)/) || [])[1];
-  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv${gid ? "&gid=" + gid : ""}&_=${Date.now()}`;
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?headers=1${gid ? "&gid=" + gid : ""}`;
+}
+// 구글 시트 gviz 응답을 <script>로 받음. 서버 없이 파일로 열어도 동작합니다.
+function fetchSheet(link) {
+  return new Promise((resolve, reject) => {
+    const base = gvizBase(link);
+    if (!base) return reject(new Error("구글 시트 주소 형식이 아닙니다."));
+    const cb = "__ft_cb" + Date.now();
+    const el = document.createElement("script");
+    const done = () => { delete window[cb]; el.remove(); clearTimeout(timer); };
+    const timer = setTimeout(() => { done(); reject(new Error("시트 응답이 없습니다. 인터넷 연결과 공유 설정(링크가 있는 모든 사용자)을 확인해 주세요.")); }, 12000);
+    window[cb] = (res) => {
+      done();
+      if (!res || res.status === "error") return reject(new Error("시트를 읽지 못했습니다. 공유 설정을 확인해 주세요."));
+      const t = res.table;
+      const head = t.cols.map((c) => (c.label || "").trim());
+      const rows = t.rows.map((r) => t.cols.map((_, i) => { const c = r.c && r.c[i]; return c == null ? "" : String(c.f ?? c.v ?? ""); }));
+      resolve([head, ...rows]);
+    };
+    el.onerror = () => { done(); reject(new Error("시트를 불러오지 못했습니다. 인터넷 연결과 공유 설정을 확인해 주세요.")); };
+    el.src = `${base}&tqx=responseHandler:${cb}&_=${Date.now()}`;
+    document.head.appendChild(el);
+  });
 }
 
 let PEOPLE = [], SOURCE = "", LOADED_AT = null, FILTER = "전체";
@@ -425,13 +448,7 @@ async function load() {
   let err = null;
   try {
     if (!link) throw null;
-    const url = csvUrl(link);
-    if (!url) throw new Error("구글 시트 주소 형식이 아닙니다.");
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`시트를 읽지 못했습니다 (HTTP ${res.status}). 공유 설정이 ‘링크가 있는 모든 사용자’인지 확인해 주세요.`);
-    const text = await res.text();
-    if (/^\s*</.test(text)) throw new Error("시트 대신 로그인 페이지가 돌아왔습니다. 공유 설정을 확인해 주세요.");
-    PEOPLE = toPeople(parseCSV(text));
+    PEOPLE = toPeople(await fetchSheet(link));
     SOURCE = "sheet";
   } catch (e) {
     err = e;
@@ -480,7 +497,7 @@ function render(err) {
       <div class="ring"><div class="val">${replied}<small>명</small></div>
       <svg viewBox="0 0 54 54" aria-label="회신률 ${rate}%"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--soft)" stroke-width="7"/><circle cx="27" cy="27" r="22" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * rate) / 100} ${C}"/></svg></div>
       <div class="sub">회신률 ${rate}%${hold ? ` · 보류 ${hold}명` : ""}</div></div>
-    <div class="card kpi"><div class="lab">키트 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${reached(2) - kit > 0 ? `발송 대기 ${reached(2) - kit}명` : "회신자 전원 발송"}</div></div>
+    <div class="card kpi"><div class="lab">키트 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${reached(2) - kit > 0 ? `발송 대기 ${reached(2) - kit}명` : kit && kit === replied ? "회신자 전원 발송" : "주소 확인 후 발송"}</div></div>
     <div class="card kpi"><div class="lab">인터뷰</div><div class="val">${inter}<small>명</small></div><div class="sub">목표 영역마다 1명 · 전체 3명</div></div>
     <div class="card kpi wide"><div class="lab">합산 구독자</div><div class="val">${fmtSubs(subsTotal)}</div><div class="sub">회신자 합산 ${fmtSubs(active.filter((p) => p.stage >= 1).reduce((a, p) => a + p.subs, 0))}</div></div>`;
 

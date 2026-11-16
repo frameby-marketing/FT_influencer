@@ -186,6 +186,8 @@ dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--
   .scroll { margin: 0 -16px; padding: 0 16px; }
   .f-row { grid-template-columns: 70px 1fr 48px; gap: 8px; }
 }
+
+.chips{flex-direction:column;align-items:flex-start;gap:8px}.filter-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.filter-group>span{color:var(--mute);width:32px;font-size:11px}.tbl-head{align-items:flex-start}.area-card{padding:15px;border:1px solid var(--line);border-radius:12px}.area-numbers{display:flex;gap:30px;margin:12px 0}.area-numbers strong{display:block;font-size:27px}.area-numbers small{font-size:13px;color:var(--mute)}.area-numbers span,.area-status{font-size:11px;color:var(--mute)}.area-people{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11px}.area-people>span{background:var(--soft);padding:5px 8px;border-radius:5px}.area-people b{color:var(--ok);margin-left:5px}.channel-link{display:inline-block;color:var(--accent);text-decoration:none;font-size:11px;margin-top:5px}.status-pill{display:inline-block;background:var(--soft);padding:4px 8px;border-radius:5px;white-space:nowrap;font-size:11px}.status-pill.sent{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}.date-line{display:block;color:var(--mute);font-size:10px;margin-top:4px}.guide{max-width:1260px;margin:20px auto;font-size:12px;color:var(--mute)}.steps{min-width:130px}.cat{gap:12px}table{min-width:1100px}
 </style>
 </head>
 <body>
@@ -245,13 +247,13 @@ dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--
     </div>
     <div class="scroll">
       <table>
-        <thead><tr><th>채널</th><th>영역</th><th>구독자</th><th>경로</th><th>진행</th><th>컨택 후</th><th>다음 액션 · 메모</th></tr></thead>
+        <thead><tr><th>채널</th><th>영역</th><th>구독자</th><th>경로</th><th>회신 여부</th><th>제품 발송 여부</th><th>진행</th><th>컨택 후</th><th>다음 액션 · 메모</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
   </section>
 </main>
-<footer id="foot"></footer>
+<section class="card guide"><b>진행 단계 입력 안내</b><p>시트의 ‘단계’에 회신완료 → 발송정보 수령 → 제품 발송 → 제품 체험 → 제품 설문조사 → 만족도 평가 → 인터뷰 제안 → 완료를 입력하면 반영됩니다. ‘제품 발송 여부’의 발송완료도 자동 반영됩니다.</p><p>선택 열: 제품발송일 · 체험 시작일 · 유튜브 채널 링크 · 다음 액션. 체험 기간은 수령 후 ‘체험 시작일’을 기준으로 7~14일 안내합니다. 컨택일로 체험 기간을 계산하지 않습니다.</p><p>채널 링크 열이 없으면 입력된 @핸들로 YouTube 주소를 연결합니다.</p></section><footer id="foot"></footer>
 
 <dialog id="dlg">
   <form method="dialog">
@@ -275,13 +277,11 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/1IyF0vx9rSybW2aSqiwVMI
 const TODAY = new Date();
 
 const STAGES = [
-  { label: "회신 대기",   short: "컨택" },
-  { label: "회신",       short: "회신" },
-  { label: "발송정보 확인", short: "발송정보" },
-  { label: "키트 발송",   short: "키트 발송" },
-  { label: "체험 중",     short: "체험" },
-  { label: "인터뷰",      short: "인터뷰" },
-  { label: "완료",       short: "완료" },
+ {label:"컨택 · 회신 대기",short:"컨택"},{label:"회신 완료",short:"회신"},
+ {label:"발송정보 수령",short:"발송정보"},{label:"제품 발송",short:"제품 발송"},
+ {label:"제품 체험 (7~14일)",short:"제품 체험"},{label:"제품 설문조사",short:"설문조사"},
+ {label:"만족도 평가",short:"만족도 평가"},{label:"인터뷰 제안 (서면·영상)",short:"인터뷰 제안"},
+ {label:"완료",short:"완료"}
 ];
 const HOLD = -1;
 const CATS = [
@@ -292,21 +292,7 @@ const CATS = [
 ];
 
 // 시트에 연결되기 전에 보여줄 데이터 (11월 16일 기준)
-const FALLBACK = [
-  ["채널","핸들","영역","구독자","경로","단계","컨택일","회신일","키트발송일","다음 액션"],
-  ["디아 Dia","@sweetdia_med","공부","79.2만","메일","회신 대기","","","","인터뷰 전 근무처 겸직 규정 확인"],
-  ["효빈 HYOBIN","@hyobin","공부","31.6만","메일","회신 대기","","","","무응답이면 인스타 DM으로 근황 인사 겸 연락"],
-  ["선선 sunsun","@sunsun_","공부","12.9만","인스타 DM","회신 대기","","","","DM 요청함 가능성. D+7에 짧게 한 번만"],
-  ["우아 ooa","@우아ooa","공부","10.3만","메일","회신 대기","","","","리마인드 1회 후 종료, 3개월 뒤 재연락"],
-  ["벨다 verrda","@verrbes","공부","3.66만","메일","회신 대기","","","","회신 시 한국 배송인지 확인"],
-  ["임윤서","@yoonseollim","공부","7.5천","메일","발송정보 확인","","","","키트와 편지 발송. 드로잉 수업 경험도 질문"],
-  ["혜윰 HYEYOOM","@iamhyeyoom","공부","1380","메일","발송정보 확인","","","","키트와 편지 발송. 사용자 패널 1순위"],
-  ["고미콩 gomikong","@gomikong","드로잉","15만","메일","회신 대기","","","","인터뷰 단계에서 스티커 세트·입점 협업 제안"],
-  ["이공 LEEGONG","@LEEGONG","드로잉","6.61만","메일","회신 대기","","","","무응답이면 인스타 DM. 필름 사용 여부 확인"],
-  ["금손햄찌","@gold_hamzzi","드로잉","5.71만","메일","발송정보 확인","","","","키트와 편지 발송. 수강생 단체 구성 질문"],
-  ["리노TV Lino TV","@Linoart","캘리그래피","1.49만","인스타 DM","발송정보 확인","","","","키트와 편지 발송. 리뷰 영상 원하면 별도 협의"],
-  ["캘리바이 (이용선)","@callibyme","캘리그래피","1.3천","메일","발송정보 확인","","","","키트와 편지 발송. 브러시 협업 여지"],
-];
+const FALLBACK = [["채널", "핸들", "영역", "구독자", "경로", "단계", "컨택일", "제품 발송 여부", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["디아 Dia", "@sweetdia_med", "공부", "79.2만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["효빈 HYOBIN", "@hyobin", "공부", "31.6만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["선선 sunsun", "@sunsun_", "공부", "12.9만", "인스타 DM", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["우아 ooa", "@우아ooa", "공부", "10.3만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["벨다 verrda", "@verrbes", "공부", "3.66만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["임윤서", "@yoonseollim", "공부", "7.5천", "메일", "회신완료", "11월 12일 목", "발송완료", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["혜윰 HYEYOOM", "@iamhyeyoom", "공부", "1380", "메일", "회신완료", "11월 12일 목", "발송완료", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["고미콩 gomikong", "@gomikong", "드로잉", "15만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["이공 LEEGONG", "@LEEGONG", "드로잉", "6.61만", "메일", "회신대기", "", "발송대기", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["금손햄찌", "@gold_hamzzi", "드로잉", "5.71만", "메일", "회신완료", "11월 12일 목", "발송완료", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["리노TV Lino TV", "@Linoart", "캘리그래피", "1.49만", "인스타 DM", "회신완료", "11월 12일 목", "발송완료", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["캘리바이 (이용선)", "@callibyme", "캘리그래피", "1.3천", "메일", "회신완료", "11월 12일 목", "발송완료", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]];
 
 /* ---------- 유틸 ---------- */
 const $ = (s) => document.querySelector(s);
@@ -362,18 +348,21 @@ function parseDate(v) {
 const daysSince = (d) => d ? Math.floor((TODAY - d) / 864e5) : null;
 
 function stageOf(t) {
-  const s = String(t || "").replace(/\s/g, "");
-  if (!s) return 0;
-  if (/보류|종료|거절|무응답종료|드롭/.test(s)) return HOLD;
-  if (/인터뷰완료|체험완료|최종완료|^완료$/.test(s)) return 6;
-  if (/인터뷰/.test(s)) return 5;
-  if (/체험|도착|사용중|설문/.test(s)) return 4;
-  if (/키트|배송|택배/.test(s)) return 3;
-  if (/발송정보|주소|정보확인/.test(s)) return 2;
-  if (/회신/.test(s) && !/대기/.test(s)) return 1;
-  return 0;
+ const s=String(t||"").replace(/\s/g,"");
+ if (/보류|거절|드롭|종료/.test(s)) return HOLD;
+ if (/인터뷰완료|최종완료|^완료$/.test(s)) return 8;
+ if (/인터뷰/.test(s)) return 7;
+ if (/만족도|평가/.test(s)) return 6;
+ if (/설문/.test(s)) return 5;
+ if (/체험|도착|사용중/.test(s)) return 4;
+ if (/발송정보|주소|정보확인/.test(s)) return 2;
+ if (/발송완료|제품발송|키트발송|배송중/.test(s)) return 3;
+ if (/회신/.test(s)&&!/대기/.test(s)) return 1;
+ return 0;
 }
-
+function safeURL(v) { try { const u=new URL(v); return u.protocol==='https:' && /(^|\.)(youtube\.com|youtu\.be)$/.test(u.hostname) ? u.href : ''; } catch {return '';} }
+function channelURL(p) { return safeURL(p.url) || (p.handle.startsWith('@') ? 'https://www.youtube.com/'+encodeURIComponent(p.handle) : ''); }
+function trial(p) {const d=daysSince(p.start);return d==null?'체험 시작일 미입력':d<0?'체험 시작 예정':d<7?`체험 ${d}일째 · 7일까지 ${7-d}일`:d<=14?`체험 ${d}일째 · 설문 안내 가능`:`체험 ${d}일째 · 설문 진행 확인`;}
 // 머리글 이름이 조금 달라도 찾도록 후보를 둠. 성함·연락처·주소 열은 읽지 않음.
 const COLS = {
   name:  ["채널", "채널명", "유튜버", "크리에이터", "인플루언서"],
@@ -384,7 +373,10 @@ const COLS = {
   stage: ["단계", "상태", "진행", "진행상황", "진행 상황"],
   sent:  ["컨택일", "연락일", "제안일", "메일발송일"],
   reply: ["회신일", "답장일"],
-  kit:   ["키트발송일", "키트 발송일", "배송일", "제품발송일"],
+  kit:   ["키트발송일", "제품 발송일", "배송일", "제품발송일"],
+  shipping: ["제품 발송 여부", "발송여부", "제품발송상태"],
+  start: ["체험 시작일", "제품수령일", "수령일"],
+  url: ["유튜브 채널 링크", "유튜브 링크", "채널링크", "채널URL", "유튜브", "링크"],
   note:  ["다음 액션", "다음액션", "메모", "비고", "팔로업"],
 };
 function toPeople(table) {
@@ -398,11 +390,15 @@ function toPeople(table) {
   const g = (r, k) => (idx[k] >= 0 ? (r[idx[k]] || "").trim() : "");
   return table.slice(1).filter((r) => g(r, "name")).map((r) => {
     const cat = g(r, "cat") || "기타";
+    const shipping=g(r,"shipping");
+    let stage=stageOf(g(r,"stage"));
+    if(stage!==HOLD && /^(발송완료|배송완료|출고완료|제품발송완료)$/.test(shipping.replace(/\s/g,''))) stage=Math.max(stage,3);
     return {
+      shipping, start:parseDate(g(r,"start")), url:g(r,"url"),
       name: g(r, "name"), handle: g(r, "handle"),
       cat: /캘리/.test(cat) ? "캘리그래피" : /드로잉|그림|일러/.test(cat) ? "드로잉" : /굿노트|필기/.test(cat) ? "굿노트 필기" : /공부|스터디/.test(cat) ? "공부" : cat,
       subs: parseSubs(g(r, "subs")), route: g(r, "route") || "–",
-      stageText: g(r, "stage"), stage: stageOf(g(r, "stage")),
+      stageText: g(r, "stage"), stage,
       sent: parseDate(g(r, "sent")), reply: parseDate(g(r, "reply")), kit: parseDate(g(r, "kit")),
       note: g(r, "note"),
     };
@@ -410,7 +406,7 @@ function toPeople(table) {
 }
 
 /* ---------- 데이터 불러오기 ---------- */
-function sheetLink() { return SHEET_URL || store.get("ft_sheet") || ""; }
+function sheetLink() { return store.get("ft_sheet") || SHEET_URL || ""; }
 function gvizBase(link) {
   const id = (link.match(/\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
   if (!id) return null;
@@ -440,7 +436,7 @@ function fetchSheet(link) {
   });
 }
 
-let PEOPLE = [], SOURCE = "", LOADED_AT = null, FILTER = "전체";
+let PEOPLE = [], SOURCE = "", LOADED_AT = null, FILTER = "전체", REPLY_FILTER = "전체", SHIP_FILTER = "전체";
 
 async function load() {
   const btn = $("#refresh"); btn.classList.add("spin"); btn.disabled = true;
@@ -462,13 +458,13 @@ async function load() {
 
 /* ---------- 그리기 ---------- */
 const catColor = (c) => (CATS.find((x) => x.key === c) || { color: "var(--faint)" }).color;
-const stageColor = (i) => (i === HOLD ? "var(--faint)" : `var(--s${i})`);
+const stageColor = (i) => i===HOLD ? "var(--faint)" : ["#b7bac4","#8f9be9","#7485df","#5267ce","#228b9b","#b37c26","#b26498","#7356b6","#26845a"][i];
 
 function render(err) {
   const N = PEOPLE.length;
   const active = PEOPLE.filter((p) => p.stage !== HOLD);
   const reached = (i) => active.filter((p) => p.stage >= i).length;
-  const replied = reached(1), kit = reached(3), inter = reached(5), hold = N - active.length;
+  const replied = reached(1), kit = reached(3), inter = reached(7), hold = N - active.length;
   const subsTotal = PEOPLE.reduce((a, p) => a + p.subs, 0);
   const rate = N ? Math.round((replied / N) * 100) : 0;
   const cats = [...new Set(PEOPLE.map((p) => p.cat))].sort((a, b) => {
@@ -497,8 +493,8 @@ function render(err) {
       <div class="ring"><div class="val">${replied}<small>명</small></div>
       <svg viewBox="0 0 54 54" aria-label="회신률 ${rate}%"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--soft)" stroke-width="7"/><circle cx="27" cy="27" r="22" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * rate) / 100} ${C}"/></svg></div>
       <div class="sub">회신률 ${rate}%${hold ? ` · 보류 ${hold}명` : ""}</div></div>
-    <div class="card kpi"><div class="lab">키트 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${reached(2) - kit > 0 ? `발송 대기 ${reached(2) - kit}명` : kit && kit === replied ? "회신자 전원 발송" : "주소 확인 후 발송"}</div></div>
-    <div class="card kpi"><div class="lab">인터뷰</div><div class="val">${inter}<small>명</small></div><div class="sub">목표 영역마다 1명 · 전체 3명</div></div>
+    <div class="card kpi"><div class="lab">제품 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${replied - kit > 0 ? `발송 대기 ${replied - kit}명` : kit && kit === replied ? "회신자 전원 발송" : "주소 확인 후 발송"}</div></div>
+    <div class="card kpi"><div class="lab">인터뷰</div><div class="val">${inter}<small>명</small></div><div class="sub">제안 이후 완료 ${reached(8)}명</div></div>
     <div class="card kpi wide"><div class="lab">합산 구독자</div><div class="val">${fmtSubs(subsTotal)}</div><div class="sub">회신자 합산 ${fmtSubs(active.filter((p) => p.stage >= 1).reduce((a, p) => a + p.subs, 0))}</div></div>`;
 
   // 퍼널
@@ -518,20 +514,25 @@ function render(err) {
       const k = ps.filter((p) => p.stage === i).length;
       return k ? `<i style="flex:${k};background:${i === HOLD ? "var(--s0)" : stageColor(i)}" title="${i === HOLD ? "보류" : STAGES[i].label} ${k}명"></i>` : "";
     }).join("");
-    return `<div><div class="cat-h"><b style="color:${catColor(c)}">${esc(c)}</b><span>회신 ${rep} / ${ps.length}명 · ${fmtSubs(ps.reduce((a, p) => a + p.subs, 0))}</span></div><div class="stack">${segs}</div></div>`;
-  }).join("") + (cats.includes("굿노트 필기") ? "" : `<div><div class="cat-h"><b style="color:var(--faint)">굿노트 필기</b><span>아직 컨택 전</span></div><div class="stack"></div></div>`);
+    const shipped=ps.filter(p=>p.stage>=3).length;
+    return `<div class="area-card"><div class="cat-h"><b style="color:${catColor(c)}">${esc(c)}</b><span>총 ${ps.length}명</span></div>
+    <div class="area-numbers"><div><strong>${rep}<small> / ${ps.length}</small></strong><span>회신 완료 · ${Math.round(rep/ps.length*100)}%</span></div><div><strong>${shipped}<small> / ${rep}</small></strong><span>제품 발송 / 회신자</span></div></div>
+    <div class="stack">${segs}</div><div class="area-status">회신 대기 ${ps.filter(p=>p.stage===0).length} · 발송 대기 ${ps.filter(p=>p.stage>=1&&p.stage<3).length} · 최종 완료 ${ps.filter(p=>p.stage===8).length}</div>
+    <div class="area-people">${ps.filter(p=>p.stage>=1).map(p=>`<span>${esc(p.name)} <b>${STAGES[p.stage].short}</b></span>`).join('')||'회신 완료 채널 없음'}</div></div>`;
+  }).join("");
   $("#legend").innerHTML = STAGES.map((s, i) => `<span><i style="background:${stageColor(i)}"></i>${s.label}</span>`).join("");
 
   // 할 일
   const tasks = [];
   for (const p of PEOPLE) {
     const d = daysSince(p.sent);
-    if (p.stage === 2) tasks.push({ p, pri: 0, tag: "키트 발송", col: "var(--accent)", when: "주소 받음" });
+    if (p.stage === 2) tasks.push({ p, pri: 0, tag: "제품 발송", col: "var(--accent)", when: "주소 받음" });
     else if (p.stage === 1) tasks.push({ p, pri: 1, tag: "정보 요청", col: "var(--accent)", when: "48시간 안에" });
     else if (p.stage === 3) {
       const k = daysSince(p.kit);
       if (k == null || k >= 3) tasks.push({ p, pri: 2, tag: "도착 확인", col: "var(--ok)", when: k == null ? "발송일 미입력" : `발송 ${k}일째` });
-    } else if (p.stage === 4) tasks.push({ p, pri: 3, tag: "설문·인터뷰", col: "var(--ok)", when: "일정 잡기" });
+    } else if (p.stage === 4) tasks.push({ p, pri: 3, tag: "체험 확인", col: "var(--ok)", when: trial(p) });
+    else if (p.stage>=5 && p.stage<8) tasks.push({p,pri:3,tag:STAGES[p.stage+1].short,col:"var(--ok)",when:"다음 단계 진행"});
     else if (p.stage === 0 && d != null && d >= 14) tasks.push({ p, pri: 1, tag: "종료 검토", col: "var(--danger)", when: `D+${d}` });
     else if (p.stage === 0 && d != null && d >= 7) tasks.push({ p, pri: 1, tag: "리마인드", col: "var(--warn)", when: `D+${d}` });
   }
@@ -545,30 +546,35 @@ function render(err) {
     + (noDate ? `<div class="empty">회신 대기 ${noDate}명은 컨택일이 비어 있어 리마인드(D+7)·종료(D+14) 시점을 계산하지 못했습니다. 시트의 ‘컨택일’ 열을 채워 주세요.</div>` : "");
 
   // 칩
-  const opts = ["전체", ...cats, "회신자"];
-  if (!opts.includes(FILTER)) FILTER = "전체";
-  $("#chips").innerHTML = opts.map((o) => `<button class="chip" aria-pressed="${o === FILTER}" data-f="${esc(o)}">${esc(o)}</button>`).join("");
-  $("#chips").querySelectorAll(".chip").forEach((b) => (b.onclick = () => { FILTER = b.dataset.f; render(err); }));
+  const opts = ["전체", ...cats];
+  $("#chips").innerHTML = `<div class="filter-group"><span>영역</span>${opts.map(o=>`<button class="chip" aria-pressed="${o===FILTER}" data-f="${esc(o)}">${esc(o)}</button>`).join('')}</div>`+
+  `<div class="filter-group"><span>회신</span>${['전체','회신 완료','회신 대기'].map(o=>`<button class="chip" aria-pressed="${o===REPLY_FILTER}" data-r="${o}">${o}</button>`).join('')}</div>`+
+  `<div class="filter-group"><span>발송</span>${['전체','발송 완료','발송 대기'].map(o=>`<button class="chip" aria-pressed="${o===SHIP_FILTER}" data-s="${o}">${o}</button>`).join('')}</div>`;
+  $("#chips").querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{FILTER=b.dataset.f;render(err)});
+  $("#chips").querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{REPLY_FILTER=b.dataset.r;render(err)});
+  $("#chips").querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SHIP_FILTER=b.dataset.s;render(err)});
 
   // 표
   const maxSubs = Math.max(1, ...PEOPLE.map((p) => p.subs));
-  const list = PEOPLE.filter((p) => FILTER === "전체" || (FILTER === "회신자" ? p.stage >= 1 : p.cat === FILTER))
-    .slice().sort((a, b) => b.stage - a.stage || b.subs - a.subs);
+  const list = PEOPLE.filter(p=>(FILTER==='전체'||p.cat===FILTER)&&(REPLY_FILTER==='전체'||(REPLY_FILTER==='회신 완료'?p.stage>=1:p.stage===0))&&(SHIP_FILTER==='전체'||(SHIP_FILTER==='발송 완료'?p.stage>=3:p.stage>=0&&p.stage<3)))
+    .slice().sort((a,b)=>(a.stage===HOLD)-(b.stage===HOLD)||b.stage-a.stage||b.subs-a.subs);
   $("#tblCount").textContent = `${list.length}명`;
   $("#rows").innerHTML = list.map((p) => {
     const d = daysSince(p.sent);
     const dcls = d == null ? "n" : p.stage === 0 && d >= 14 ? "d" : p.stage === 0 && d >= 7 ? "w" : "";
-    const steps = STAGES.map((_, i) => `<i class="${p.stage === HOLD ? "" : i <= p.stage ? (p.stage === 6 ? "done" : "on") : ""}"></i>`).join("");
+    const steps = STAGES.map((_, i) => `<i class="${p.stage === HOLD ? "" : i <= p.stage ? (p.stage === 8 ? "done" : "on") : ""}"></i>`).join("");
     const cc = catColor(p.cat);
     return `<tr>
-      <td class="nm"><b>${esc(p.name)}</b><span class="mono">${esc(p.handle)}</span></td>
+      <td class="nm"><b>${esc(p.name)}</b><span class="mono">${esc(p.handle)}</span>${channelURL(p)?`<a class="channel-link" href="${esc(channelURL(p))}" target="_blank" rel="noopener noreferrer">YouTube ↗</a>`:""}</td>
       <td><span class="ctag" style="color:${cc};background:color-mix(in srgb, ${cc} 14%, transparent)">${esc(p.cat)}</span></td>
       <td class="subs">${fmtSubs(p.subs)}<div class="mini"><i style="width:${Math.max(2, (p.subs / maxSubs) * 100)}%"></i></div></td>
       <td>${esc(p.route)}</td>
+      <td><span class="status-pill">${p.stage>=1?'회신 완료':p.stage===HOLD?'보류':'회신 대기'}</span></td>
+      <td><span class="status-pill ${p.stage>=3?'sent':''}">${p.stage>=3?'발송 완료':esc(p.shipping)||'미입력'}</span><small class="date-line">${p.kit?`${p.kit.getMonth()+1}/${p.kit.getDate()} 발송`:'발송일 미입력'}</small></td>
       <td><div class="steps">${steps}</div><div class="steplab${p.stage === HOLD ? " hold" : ""}">${p.stage === HOLD ? esc(p.stageText || "보류") : STAGES[p.stage].label}</div></td>
       <td class="dday ${dcls}">${d == null ? "날짜 없음" : "D+" + d}</td>
-      <td class="act">${esc(p.note) || "–"}</td></tr>`;
-  }).join("");
+      <td class="act">${p.stage===3?"제품 수령 확인 후 체험 시작일 입력":p.stage===4?esc(trial(p)):esc(p.note)||"–"}</td></tr>`;
+  }).join("") || `<tr><td colspan="9" class="empty">조건에 맞는 채널이 없습니다.</td></tr>`;
 
   const t = LOADED_AT;
   $("#foot").innerHTML = `${SOURCE === "sheet" ? "스프레드시트" : "내장 데이터"} 기준 · ${t.getMonth() + 1}월 ${t.getDate()}일 ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} 불러옴 · 성함·연락처·주소 열은 화면에 불러오지 않습니다.`;

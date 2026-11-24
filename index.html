@@ -160,6 +160,14 @@ td.act { color: var(--mute); max-width: 260px; }
 footer { max-width: 1240px; margin: 0 auto; padding: 0 24px 32px; color: var(--faint); font-size: 12px; }
 
 dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); padding: 20px; width: min(520px, calc(100vw - 32px)); }
+button.post-kpi { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.post-kpi:hover, button.post-kpi:focus-visible { border-color: var(--accent); }
+#posts-dialog { width: min(760px, calc(100vw - 32px)); max-height: 85vh; }
+#posts-list { display: grid; gap: 12px; }
+.post-entry { padding: 14px; display: grid; gap: 10px; }
+.post-entry h4, .post-entry p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.post-entry img { display: block; width: 100%; max-height: 65vh; object-fit: contain; }
+.post-entry a { color: var(--accent); }
 dialog::backdrop { background: rgba(0,0,0,.35); }
 dialog h3 { margin: 0 0 6px; font-size: 16px; }
 dialog p { margin: 0 0 12px; color: var(--mute); font-size: 13px; }
@@ -277,6 +285,12 @@ dialog .btn.pri { background: var(--ink); color: var(--bg); border-color: var(--
   </form>
 </dialog>
 
+<dialog id="posts-dialog" aria-labelledby="posts-title">
+  <h3 id="posts-title"></h3>
+  <div id="posts-list"></div>
+  <form class="acts" method="dialog"><button class="btn" autofocus>닫기</button></form>
+</dialog>
+
 <script>
 /* ============================================================
    설정: 시트 주소를 여기에 넣어 두면 누구 브라우저에서 열어도 바로 연결됩니다.
@@ -386,6 +400,8 @@ const COLS = {
   kit:   ["키트발송일", "제품 발송일", "배송일", "제품발송일"],
   shipping: ["제품 발송 여부", "발송여부", "제품발송상태"],
   survey: ["설문 발송 여부", "설문발송상태", "설문 발송", "설문조사 발송 여부"],
+  post: ["게시물"],
+  postContent: ["게시물 내용"],
   start: ["체험 시작일", "제품수령일", "수령일"],
   url: ["유튜브 채널 링크", "유튜브 링크", "채널링크", "채널URL", "유튜브", "링크"],
   note:  ["다음 액션", "다음액션", "메모", "비고", "팔로업"],
@@ -397,7 +413,7 @@ function toPeople(table) {
   const idx = {};
   for (const [k, cands] of Object.entries(COLS)) {
     idx[k] = head.findIndex((h) => cands.some((c) => h.replace(/\s/g, "") === c.replace(/\s/g, "")));
-    if (idx[k] < 0) idx[k] = head.findIndex((h) => cands.some((c) => h.includes(c)));
+    if (idx[k] < 0 && k !== "post" && k !== "postContent") idx[k] = head.findIndex((h) => cands.some((c) => h.includes(c)));
   }
   if (idx.name < 0) throw new Error("‘채널’ 열을 찾지 못했습니다. 첫 행 머리글에 ‘채널’을 넣어 주세요.");
   const g = (r, k) => (idx[k] >= 0 ? (r[idx[k]] || "").trim() : "");
@@ -409,7 +425,7 @@ function toPeople(table) {
     if(stage!==HOLD && /^(발송완료|배송완료|출고완료|제품발송완료)$/.test(shipping.replace(/\s/g,''))) stage=Math.max(stage,3);
     if(stage!==HOLD && isSent(survey)) stage=Math.max(stage,5);
     return {
-      survey, shipping, start:parseDate(g(r,"start")), url:g(r,"url"),
+      survey, shipping, post: g(r, "post"), postContent: g(r, "postContent"), start:parseDate(g(r,"start")), url:g(r,"url"),
       name: g(r, "name"), handle: g(r, "handle"),
       cat: /캘리/.test(cat) ? "캘리그래피" : /드로잉|그림|일러/.test(cat) ? "드로잉" : /굿노트|필기/.test(cat) ? "굿노트 필기" : /공부|스터디/.test(cat) ? "공부" : cat,
       subs: parseSubs(g(r, "subs")), route: g(r, "route") || "–",
@@ -481,7 +497,7 @@ function render(err) {
   const reached = (i) => active.filter((p) => p.stage >= i).length;
   const replied = reached(1), kit = reached(3), inter = reached(7), hold = N - active.length;
   const surveySent = PEOPLE.filter(p=>isSent(p.survey)).length;
-  const subsTotal = PEOPLE.reduce((a, p) => a + p.subs, 0);
+  const uploaded = PEOPLE.filter((p) => p.post);
   const rate = N ? Math.round((replied / N) * 100) : 0;
   const cats = [...new Set(PEOPLE.map((p) => p.cat))].sort((a, b) => {
     const ia = CATS.findIndex((c) => c.key === a), ib = CATS.findIndex((c) => c.key === b);
@@ -512,7 +528,11 @@ function render(err) {
     <div class="card kpi"><div class="lab">제품 발송</div><div class="val">${kit}<small>/ ${replied}명</small></div><div class="sub">${replied - kit > 0 ? `발송 대기 ${replied - kit}명` : kit && kit === replied ? "회신자 전원 발송" : "주소 확인 후 발송"}</div></div>
     <div class="card kpi"><div class="lab">설문 발송</div><div class="val">${surveySent}<small>명</small></div><div class="sub">발송 대기 ${PEOPLE.filter(p=>/대기/.test(p.survey)).length}명 · 미입력 ${PEOPLE.filter(p=>!p.survey).length}명</div></div>
     <div class="card kpi"><div class="lab">인터뷰</div><div class="val">${inter}<small>명</small></div><div class="sub">제안 이후 완료 ${reached(8)}명</div></div>
-    <div class="card kpi wide"><div class="lab">회신자 합산 구독자</div><div class="val">${fmtSubs(active.filter((p) => p.stage >= 1).reduce((a, p) => a + p.subs, 0))}</div><div class="sub">전체 채널 합산 ${fmtSubs(subsTotal)}</div></div>`;
+    <button type="button" id="posts-kpi" class="card kpi post-kpi" aria-haspopup="dialog" aria-controls="posts-dialog">
+      <span class="lab">게시물 업로드</span><span class="val" style="display:block">${SOURCE === "sheet" ? uploaded.length + "<small>명</small>" : "–"}</span>
+      <span class="sub" style="display:block">${SOURCE === "sheet" ? "게시물 이미지 보기" : "시트 연결 필요"}</span>
+    </button>`;
+  $("#posts-kpi").onclick = () => openPosts(uploaded);
 
   // 퍼널
   $("#funnel").innerHTML = STAGES.map((s, i) => {
@@ -587,6 +607,48 @@ function render(err) {
 }
 
 /* ---------- 버튼 ---------- */
+function openPosts(uploaded) {
+  $("#posts-title").textContent = SOURCE === "sheet" ? `게시물 업로드 · ${uploaded.length}명` : "게시물 업로드";
+  const list = $("#posts-list");
+  list.replaceChildren();
+  if (!uploaded.length) {
+    list.textContent = SOURCE === "sheet" ? "등록된 게시물이 없습니다." : "스프레드시트를 연결하면 게시물 업로드 현황을 확인할 수 있습니다.";
+  }
+  for (const person of uploaded) {
+    const entry = document.createElement("article");
+    entry.className = "card post-entry";
+    const title = document.createElement("h4");
+    title.textContent = person.name;
+    entry.append(title);
+
+    const urls = [...new Set(person.postContent.match(/https?:\/\/[^\s"'<>),]+/gi) || [])];
+    if (!urls.length) {
+      const detail = document.createElement("p");
+      detail.textContent = person.postContent || "표시할 이미지가 없습니다. 게시물 내용 셀에 열람 가능한 이미지 URL을 입력해 주세요.";
+      entry.append(detail);
+    }
+    for (const url of urls) {
+      const image = document.createElement("img");
+      image.alt = `${person.name} 게시물 이미지`;
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "이미지 원본 열기";
+      image.addEventListener("error", () => {
+        const notice = document.createElement("p");
+        notice.textContent = "미리보기를 불러오지 못했습니다. 원본 링크와 공유 권한을 확인해 주세요.";
+        image.replaceWith(notice);
+      }, { once: true });
+      const driveId = url.match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|(?:open|uc|thumbnail)\?[^#]*\bid=)([\w-]+)/i)?.[1];
+      image.src = driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w1600` : url;
+      entry.append(image, link);
+    }
+    list.append(entry);
+  }
+  $("#posts-dialog").showModal();
+}
+
 function openDialog() {
   $("#dlgInput").value = sheetLink();
   $("#dlg").showModal();
